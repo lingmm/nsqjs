@@ -1,85 +1,93 @@
-const should = require('should')
-const sinon = require('sinon')
+'use strict';
 
-const nsq = require('../lib/nsq')
+var should = require('should');
+var sinon = require('sinon');
 
-describe('reader', () => {
-  const readerWithAttempts = attempts =>
-    new nsq.Reader('topic', 'default', {
+var nsq = require('../src/nsq');
+
+describe('reader', function () {
+  var readerWithAttempts = function readerWithAttempts(attempts) {
+    return new nsq.Reader('topic', 'default', {
       nsqdTCPAddresses: ['127.0.0.1:4150'],
       maxAttempts: attempts
-    })
+    });
+  };
 
-  describe('max attempts', () =>
-    describe('exceeded', () => {
-      it('should finish after exceeding specified max attempts', done => {
-        const maxAttempts = 2
-        const reader = readerWithAttempts(maxAttempts)
+  describe('max attempts', function () {
+    return describe('exceeded', function () {
+      it('should finish after exceeding specified max attempts', function (done) {
+        var maxAttempts = 2;
+        var reader = readerWithAttempts(maxAttempts);
 
         // Message that has exceed the maximum number of attempts
-        const message = {
+        var message = {
           attempts: maxAttempts,
           finish: sinon.spy()
-        }
+        };
 
-        reader.handleMessage(message)
+        reader.handleMessage(message);
 
-        process.nextTick(() => {
-          should.equal(message.finish.called, true)
-          done()
-        })
-      })
+        process.nextTick(function () {
+          should.equal(message.finish.called, true);
+          done();
+        });
+      });
 
-      it('should call the DISCARD message hanlder if registered', done => {
-        const maxAttempts = 2
-        const reader = readerWithAttempts(maxAttempts)
+      it('should call the DISCARD message hanlder if registered', function (done) {
+        var maxAttempts = 2;
+        var reader = readerWithAttempts(maxAttempts);
 
-        const message = {
+        var message = {
           attempts: maxAttempts,
-          finish () {}
-        }
+          finish: function finish() {}
+        };
 
-        reader.on(nsq.Reader.DISCARD, () => done())
-        reader.handleMessage(message)
-      })
+        reader.on(nsq.Reader.DISCARD, function () {
+          return done();
+        });
+        reader.handleMessage(message);
+      });
 
-      it('should call the MESSAGE handler by default', done => {
-        const maxAttempts = 2
-        const reader = readerWithAttempts(maxAttempts)
+      it('should call the MESSAGE handler by default', function (done) {
+        var maxAttempts = 2;
+        var reader = readerWithAttempts(maxAttempts);
 
-        const message = {
+        var message = {
           attempts: maxAttempts,
-          finish () {}
-        }
+          finish: function finish() {}
+        };
 
-        reader.on(nsq.Reader.MESSAGE, () => done())
-        reader.handleMessage(message)
-      })
-    }))
+        reader.on(nsq.Reader.MESSAGE, function () {
+          return done();
+        });
+        reader.handleMessage(message);
+      });
+    });
+  });
 
-  describe('off by default', () =>
-    it('should not finish the message', done => {
-      const reader = readerWithAttempts(0)
+  describe('off by default', function () {
+    return it('should not finish the message', function (done) {
+      var reader = readerWithAttempts(0);
 
-      const message = {
+      var message = {
         attempts: 100,
         finish: sinon.spy()
-      }
 
-      // Registering this to make sure that even if the listener is available,
-      // it should not be getting called.
-      reader.on(nsq.Reader.DISCARD, () => {
-        done(new Error('Unexpected discard message'))
-      })
+        // Registering this to make sure that even if the listener is available,
+        // it should not be getting called.
+      };reader.on(nsq.Reader.DISCARD, function () {
+        done(new Error('Unexpected discard message'));
+      });
 
-      const messageHandlerSpy = sinon.spy()
-      reader.on(nsq.Reader.MESSAGE, messageHandlerSpy)
-      reader.handleMessage(message)
+      var messageHandlerSpy = sinon.spy();
+      reader.on(nsq.Reader.MESSAGE, messageHandlerSpy);
+      reader.handleMessage(message);
 
-      process.nextTick(() => {
-        should.equal(messageHandlerSpy.called, true)
-        should.equal(message.finish.called, false)
-        done()
-      })
-    }))
-})
+      process.nextTick(function () {
+        should.equal(messageHandlerSpy.called, true);
+        should.equal(message.finish.called, false);
+        done();
+      });
+    });
+  });
+});

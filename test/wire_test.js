@@ -1,107 +1,86 @@
-const should = require('should')
-const wire = require('../lib/wire')
+'use strict';
 
-const matchCommand = (commandFn, args, expected) => {
-  const commandOut = commandFn(...args)
-  should.equal(commandOut.toString(), expected)
-}
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-describe('nsq wire', () => {
-  it('should construct an identity message', () => {
-    matchCommand(
-      wire.identify,
-      [{ short_id: 1, long_id: 2 }],
-      'IDENTIFY\n\u0000\u0000\u0000\u001a{"short_id":1,"long_id":2}'
-    )
-  })
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-  it('should construct an identity message with unicode', () =>
-    matchCommand(
-      wire.identify,
-      [{ long_id: 'w\u00c3\u00a5\u00e2\u0080\u00a0' }],
-      'IDENTIFY\n\u0000\u0000\u0000-{"long_id":"w\\u00c3\\u00a5\\u00e2' +
-        '\\u0080\\u00a0"}'
-    ))
+var should = require('should');
+var wire = require('../src/wire');
 
-  it('should subscribe to a topic and channel', () =>
-    matchCommand(
-      wire.subscribe,
-      ['test_topic', 'test_channel'],
-      'SUB test_topic test_channel\n'
-    ))
+var matchCommand = function matchCommand(commandFn, args, expected) {
+  var commandOut = commandFn.apply(undefined, _toConsumableArray(args));
+  should.equal(commandOut.toString(), expected);
+};
 
-  it('should finish a message', () =>
-    matchCommand(wire.finish, ['test'], 'FIN test\n'))
+describe('nsq wire', function () {
+  it('should construct an identity message', function () {
+    matchCommand(wire.identify, [{ short_id: 1, long_id: 2 }], 'IDENTIFY\n\0\0\0\x1A{"short_id":1,"long_id":2}');
+  });
 
-  it('should finish a message with a unicode id', () =>
-    matchCommand(
-      wire.finish,
-      ['\u00fcn\u00ee\u00e7\u00f8\u2202\u00e9'],
-      'FIN \u00fcn\u00ee\u00e7\u00f8\u2202\u00e9\n'
-    ))
+  it('should construct an identity message with unicode', function () {
+    return matchCommand(wire.identify, [{ long_id: 'w\xC3\xA5\xE2\x80\xA0' }], 'IDENTIFY\n\0\0\0-{"long_id":"w\\u00c3\\u00a5\\u00e2' + '\\u0080\\u00a0"}');
+  });
 
-  it('should requeue a message', () =>
-    matchCommand(wire.requeue, ['test'], 'REQ test 0\n'))
+  it('should subscribe to a topic and channel', function () {
+    return matchCommand(wire.subscribe, ['test_topic', 'test_channel'], 'SUB test_topic test_channel\n');
+  });
 
-  it('should requeue a message with timeout', () =>
-    matchCommand(wire.requeue, ['test', 60], 'REQ test 60\n'))
+  it('should finish a message', function () {
+    return matchCommand(wire.finish, ['test'], 'FIN test\n');
+  });
 
-  it('should touch a message', () =>
-    matchCommand(wire.touch, ['test'], 'TOUCH test\n'))
+  it('should finish a message with a unicode id', function () {
+    return matchCommand(wire.finish, ['\xFCn\xEE\xE7\xF8\u2202\xE9'], 'FIN \xFCn\xEE\xE7\xF8\u2202\xE9\n');
+  });
 
-  it('should construct a ready message', () =>
-    matchCommand(wire.ready, [100], 'RDY 100\n'))
+  it('should requeue a message', function () {
+    return matchCommand(wire.requeue, ['test'], 'REQ test 0\n');
+  });
 
-  it('should construct a no-op message', () =>
-    matchCommand(wire.nop, [], 'NOP\n'))
+  it('should requeue a message with timeout', function () {
+    return matchCommand(wire.requeue, ['test', 60], 'REQ test 60\n');
+  });
 
-  it('should publish a message', () =>
-    matchCommand(
-      wire.pub,
-      ['test_topic', 'abcd'],
-      'PUB test_topic\n\u0000\u0000\u0000\u0004abcd'
-    ))
+  it('should touch a message', function () {
+    return matchCommand(wire.touch, ['test'], 'TOUCH test\n');
+  });
 
-  it('should publish a multi-byte string message', () =>
-    matchCommand(
-      wire.pub,
-      ['test_topic', 'こんにちは'],
-      'PUB test_topic\n\u0000\u0000\u0000\u000fこんにちは'
-    ))
+  it('should construct a ready message', function () {
+    return matchCommand(wire.ready, [100], 'RDY 100\n');
+  });
 
-  it('should publish multiple string messages', () =>
-    matchCommand(
-      wire.mpub,
-      ['test_topic', ['abcd', 'efgh', 'ijkl']],
-      [
-        'MPUB test_topic\n\u0000\u0000\u0000\u001c\u0000\u0000\u0000\u0003',
-        '\u0000\u0000\u0000\u0004abcd',
-        '\u0000\u0000\u0000\u0004efgh',
-        '\u0000\u0000\u0000\u0004ijkl'
-      ].join('')
-    ))
+  it('should construct a no-op message', function () {
+    return matchCommand(wire.nop, [], 'NOP\n');
+  });
 
-  it('should publish multiple buffer messages', () =>
-    matchCommand(
-      wire.mpub,
-      ['test_topic', [new Buffer('abcd'), new Buffer('efgh')]],
-      [
-        'MPUB test_topic\n\u0000\u0000\u0000\u0014\u0000\u0000\u0000\u0002',
-        '\u0000\u0000\u0000\u0004abcd',
-        '\u0000\u0000\u0000\u0004efgh'
-      ].join('')
-    ))
+  it('should publish a message', function () {
+    return matchCommand(wire.pub, ['test_topic', 'abcd'], 'PUB test_topic\n\0\0\0\x04abcd');
+  });
 
-  return it('should unpack a received message', () => {
-    const msgPayload = [
-      '132cb60626e9fd7a00013035356335626531636534333330323769747265616c6c7974',
-      '696564746865726f6f6d746f676574686572'
-    ]
-    const msgParts = wire.unpackMessage(new Buffer(msgPayload.join(''), 'hex'))
+  it('should publish a multi-byte string message', function () {
+    return matchCommand(wire.pub, ['test_topic', 'こんにちは'], 'PUB test_topic\n\0\0\0\x0F\u3053\u3093\u306B\u3061\u306F');
+  });
 
-    const [id, timestamp, attempts] = Array.from(msgParts)
-    timestamp.toString(10).should.eql('1381679323234827642')
-    id.should.eql('055c5be1ce433027')
-    return attempts.should.eql(1)
-  })
-})
+  it('should publish multiple string messages', function () {
+    return matchCommand(wire.mpub, ['test_topic', ['abcd', 'efgh', 'ijkl']], ['MPUB test_topic\n\0\0\0\x1C\0\0\0\x03', '\0\0\0\x04abcd', '\0\0\0\x04efgh', '\0\0\0\x04ijkl'].join(''));
+  });
+
+  it('should publish multiple buffer messages', function () {
+    return matchCommand(wire.mpub, ['test_topic', [new Buffer('abcd'), new Buffer('efgh')]], ['MPUB test_topic\n\0\0\0\x14\0\0\0\x02', '\0\0\0\x04abcd', '\0\0\0\x04efgh'].join(''));
+  });
+
+  return it('should unpack a received message', function () {
+    var msgPayload = ['132cb60626e9fd7a00013035356335626531636534333330323769747265616c6c7974', '696564746865726f6f6d746f676574686572'];
+    var msgParts = wire.unpackMessage(new Buffer(msgPayload.join(''), 'hex'));
+
+    var _Array$from = Array.from(msgParts),
+        _Array$from2 = _slicedToArray(_Array$from, 3),
+        id = _Array$from2[0],
+        timestamp = _Array$from2[1],
+        attempts = _Array$from2[2];
+
+    timestamp.toString(10).should.eql('1381679323234827642');
+    id.should.eql('055c5be1ce433027');
+    return attempts.should.eql(1);
+  });
+});

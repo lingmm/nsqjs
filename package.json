@@ -33,13 +33,20 @@
   "scripts": {
     "format": "prettier --single-quote --trailing-comma es5 --write \"{lib,test}/**/*.js\"",
     "lint": "standard lib",
-    "test": "mocha -R spec -b"
+    "test": "babel test_es6 -d test --presets=env -D && mocha -r babel-polyfill -R spec -b",
+    "build": "babel lib -d src --presets=env",
+    "watch": "babel lib -d src -presets=env -w"
   },
-  "main": "lib/nsq",
+  "main": "src/nsq",
   "engines": {
-    "node": ">= 6.0.0"
+    "node": ">= 4.0.0"
   },
+  "files": [
+    "src"
+  ],
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
     "mocha": "^3.5",
     "nock": "~9.0.14",
     "prettier": "^1.6.1",
@@ -50,6 +57,7 @@
   },
   "dependencies": {
     "async": "^2.1.4",
+    "babel-polyfill": "^6.26.0",
     "bignumber.js": "~4.0.3",
     "debug": "^3.0.1",
     "lodash": "^4.17.4",

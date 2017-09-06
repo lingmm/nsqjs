@@ -1,86 +1,90 @@
-const should = require('should')
-const sinon = require('sinon')
-const Message = require('../lib/message')
+'use strict';
 
-const createMessage = (body, requeueDelay, timeout, maxTimeout) =>
-  new Message(
-    '1',
-    Date.now(),
-    0,
-    new Buffer(body),
-    requeueDelay,
-    timeout,
-    maxTimeout
-  )
+var should = require('should');
+var sinon = require('sinon');
+var Message = require('../src/message');
 
-describe('Message', () =>
-  describe('timeout', () => {
-    it('should not allow finishing a message twice', done => {
-      const msg = createMessage('body', 90, 50, 100)
+var createMessage = function createMessage(body, requeueDelay, timeout, maxTimeout) {
+  return new Message('1', Date.now(), 0, new Buffer(body), requeueDelay, timeout, maxTimeout);
+};
 
-      const firstFinish = () => msg.finish()
-      const secondFinish = () => {
-        msg.hasResponded.should.eql(true)
-        done()
-      }
+describe('Message', function () {
+  return describe('timeout', function () {
+    it('should not allow finishing a message twice', function (done) {
+      var msg = createMessage('body', 90, 50, 100);
 
-      setTimeout(firstFinish, 10)
-      setTimeout(secondFinish, 20)
-    })
+      var firstFinish = function firstFinish() {
+        return msg.finish();
+      };
+      var secondFinish = function secondFinish() {
+        msg.hasResponded.should.eql(true);
+        done();
+      };
 
-    it('should not allow requeue after finish', done => {
-      const msg = createMessage('body', 90, 50, 100)
+      setTimeout(firstFinish, 10);
+      setTimeout(secondFinish, 20);
+    });
 
-      const responseSpy = sinon.spy()
-      msg.on(Message.RESPOND, responseSpy)
+    it('should not allow requeue after finish', function (done) {
+      var msg = createMessage('body', 90, 50, 100);
 
-      const firstFinish = () => msg.finish()
-      const secondRequeue = () => msg.requeue()
+      var responseSpy = sinon.spy();
+      msg.on(Message.RESPOND, responseSpy);
 
-      const check = () => {
-        responseSpy.calledOnce.should.be.true()
-        done()
-      }
+      var firstFinish = function firstFinish() {
+        return msg.finish();
+      };
+      var secondRequeue = function secondRequeue() {
+        return msg.requeue();
+      };
 
-      setTimeout(firstFinish, 10)
-      setTimeout(secondRequeue, 20)
-      setTimeout(check, 20)
-    })
+      var check = function check() {
+        responseSpy.calledOnce.should.be.true();
+        done();
+      };
 
-    it('should allow touch and then finish post first timeout', done => {
-      const touchIn = 15
-      const timeoutIn = 20
-      const finishIn = 25
-      const checkIn = 30
+      setTimeout(firstFinish, 10);
+      setTimeout(secondRequeue, 20);
+      setTimeout(check, 20);
+    });
 
-      const msg = createMessage('body', 90, timeoutIn, 100)
-      const responseSpy = sinon.spy()
-      msg.on(Message.RESPOND, responseSpy)
+    it('should allow touch and then finish post first timeout', function (done) {
+      var touchIn = 15;
+      var timeoutIn = 20;
+      var finishIn = 25;
+      var checkIn = 30;
 
-      const touch = () => msg.touch()
+      var msg = createMessage('body', 90, timeoutIn, 100);
+      var responseSpy = sinon.spy();
+      msg.on(Message.RESPOND, responseSpy);
 
-      const finish = () => {
-        msg.timedOut.should.be.eql(false)
-        return msg.finish()
-      }
+      var touch = function touch() {
+        return msg.touch();
+      };
 
-      const check = () => {
-        responseSpy.calledTwice.should.be.true()
-        return done()
-      }
+      var finish = function finish() {
+        msg.timedOut.should.be.eql(false);
+        return msg.finish();
+      };
 
-      setTimeout(touch, touchIn)
-      setTimeout(finish, finishIn)
-      return setTimeout(check, checkIn)
-    })
+      var check = function check() {
+        responseSpy.calledTwice.should.be.true();
+        return done();
+      };
 
-    return it('should clear timeout on finish', done => {
-      const msg = createMessage('body', 10, 60, 120)
-      msg.finish()
+      setTimeout(touch, touchIn);
+      setTimeout(finish, finishIn);
+      return setTimeout(check, checkIn);
+    });
 
-      return process.nextTick(() => {
-        should.not.exist(msg.trackTimeoutId)
-        return done()
-      })
-    })
-  }))
+    return it('should clear timeout on finish', function (done) {
+      var msg = createMessage('body', 10, 60, 120);
+      msg.finish();
+
+      return process.nextTick(function () {
+        should.not.exist(msg.trackTimeoutId);
+        return done();
+      });
+    });
+  });
+});

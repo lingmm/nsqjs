@@ -10,3 +10,6 @@ node_modules/
 share/man
 src/node-*
 build
+test
+*.log
+package-lock.json

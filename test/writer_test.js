@@ -1,146 +1,144 @@
-const should = require('should')
-const sinon = require('sinon')
+'use strict';
 
-const nsq = require('../lib/nsq')
+var should = require('should');
+var sinon = require('sinon');
 
-describe('writer', () => {
-  let writer = null
+var nsq = require('../src/nsq');
 
-  beforeEach(() => {
-    writer = new nsq.Writer('127.0.0.1', '4150')
-    writer.conn = { produceMessages: sinon.stub() }
-  })
+describe('writer', function () {
+  var writer = null;
 
-  afterEach(() => {
-    writer = null
-  })
+  beforeEach(function () {
+    writer = new nsq.Writer('127.0.0.1', '4150');
+    writer.conn = { produceMessages: sinon.stub() };
+  });
 
-  describe('publish', () => {
-    it('should publish a string', () => {
-      const topic = 'test_topic'
-      const msg = 'hello world!'
+  afterEach(function () {
+    writer = null;
+  });
 
-      writer.publish(topic, msg, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(writer.conn.produceMessages.calledWith(topic, [msg]), true)
-      })
-    })
+  describe('publish', function () {
+    it('should publish a string', function () {
+      var topic = 'test_topic';
+      var msg = 'hello world!';
 
-    it('should defer publish a string', () => {
-      const topic = 'test_topic'
-      const msg = 'hello world!'
+      writer.publish(topic, msg, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, [msg]), true);
+      });
+    });
 
-      writer.publish(topic, msg, 300, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(writer.conn.produceMessages.calledWith(topic, [msg]), true)
-      })
-    })
+    it('should defer publish a string', function () {
+      var topic = 'test_topic';
+      var msg = 'hello world!';
+
+      writer.publish(topic, msg, 300, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, [msg]), true);
+      });
+    });
 
     // Add test where it is not ready yet
 
-    it('should publish a list of strings', () => {
-      const topic = 'test_topic'
-      const msgs = ['hello world!', 'another message']
+    it('should publish a list of strings', function () {
+      var topic = 'test_topic';
+      var msgs = ['hello world!', 'another message'];
 
-      writer.publish(topic, msgs, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(writer.conn.produceMessages.calledWith(topic, msgs), true)
-      })
-    })
+      writer.publish(topic, msgs, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, msgs), true);
+      });
+    });
 
-    it('should publish a buffer', () => {
-      const topic = 'test_topic'
-      const msg = new Buffer('a buffer message')
+    it('should publish a buffer', function () {
+      var topic = 'test_topic';
+      var msg = new Buffer('a buffer message');
 
-      writer.publish(topic, msg, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(writer.conn.produceMessages.calledWith(topic, [msg]), true)
-      })
-    })
+      writer.publish(topic, msg, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, [msg]), true);
+      });
+    });
 
-    it('should publish an object as JSON', () => {
-      const topic = 'test_topic'
-      const msg = { a: 1 }
+    it('should publish an object as JSON', function () {
+      var topic = 'test_topic';
+      var msg = { a: 1 };
 
-      writer.publish(topic, msg, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(
-          writer.conn.produceMessages.calledWith(topic, [JSON.stringify(msg)]),
-          true
-        )
-      })
-    })
+      writer.publish(topic, msg, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, [JSON.stringify(msg)]), true);
+      });
+    });
 
-    it('should publish a list of buffers', () => {
-      const topic = 'test_topic'
-      const msgs = [new Buffer('a buffer message'), new Buffer('another msg')]
+    it('should publish a list of buffers', function () {
+      var topic = 'test_topic';
+      var msgs = [new Buffer('a buffer message'), new Buffer('another msg')];
 
-      writer.publish(topic, msgs, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(writer.conn.produceMessages.calledWith(topic, msgs), true)
-      })
-    })
+      writer.publish(topic, msgs, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, msgs), true);
+      });
+    });
 
-    it('should publish a list of objects as JSON', () => {
-      const topic = 'test_topic'
-      const msgs = [{ a: 1 }, { b: 2 }]
-      const encodedMsgs = Array.from(msgs).map(i => JSON.stringify(i))
+    it('should publish a list of objects as JSON', function () {
+      var topic = 'test_topic';
+      var msgs = [{ a: 1 }, { b: 2 }];
+      var encodedMsgs = Array.from(msgs).map(function (i) {
+        return JSON.stringify(i);
+      });
 
-      writer.publish(topic, msgs, () => {
-        should.equal(writer.conn.produceMessages.calledOnce, true)
-        should.equal(
-          writer.conn.produceMessages.calledWith(topic, encodedMsgs),
-          true
-        )
-      })
-    })
+      writer.publish(topic, msgs, function () {
+        should.equal(writer.conn.produceMessages.calledOnce, true);
+        should.equal(writer.conn.produceMessages.calledWith(topic, encodedMsgs), true);
+      });
+    });
 
-    it('should fail when publishing Null', done => {
-      const topic = 'test_topic'
-      const msg = null
+    it('should fail when publishing Null', function (done) {
+      var topic = 'test_topic';
+      var msg = null;
 
-      writer.publish(topic, msg, err => {
-        should.exist(err)
-        done()
-      })
-    })
+      writer.publish(topic, msg, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
-    it('should fail when publishing Undefined', done => {
-      const topic = 'test_topic'
-      const msg = undefined
+    it('should fail when publishing Undefined', function (done) {
+      var topic = 'test_topic';
+      var msg = undefined;
 
-      writer.publish(topic, msg, err => {
-        should.exist(err)
-        done()
-      })
-    })
+      writer.publish(topic, msg, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
-    it('should fail when publishing an empty string', done => {
-      const topic = 'test_topic'
-      const msg = ''
+    it('should fail when publishing an empty string', function (done) {
+      var topic = 'test_topic';
+      var msg = '';
 
-      writer.publish(topic, msg, err => {
-        should.exist(err)
-        done()
-      })
-    })
+      writer.publish(topic, msg, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
-    it('should fail when publishing an empty list', done => {
-      const topic = 'test_topic'
-      const msg = []
+    it('should fail when publishing an empty list', function (done) {
+      var topic = 'test_topic';
+      var msg = [];
 
-      writer.publish(topic, msg, err => {
-        should.exist(err)
-        done()
-      })
-    })
+      writer.publish(topic, msg, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
-    it('should fail when the Writer is not connected', done => {
-      writer = new nsq.Writer('127.0.0.1', '4150')
-      writer.publish('test_topic', 'a briliant message', err => {
-        should.exist(err)
-        done()
-      })
-    })
-  })
-})
+    it('should fail when the Writer is not connected', function (done) {
+      writer = new nsq.Writer('127.0.0.1', '4150');
+      writer.publish('test_topic', 'a briliant message', function (err) {
+        should.exist(err);
+        done();
+      });
+    });
+  });
+});
