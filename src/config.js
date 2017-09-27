@@ -266,7 +266,8 @@ var ConnectionConfig = function () {
         key: [this.isBuffer],
         cert: [this.isBuffer],
         ca: [this.isArray],
-        idleTimeout: [this.isNumber, 0]
+        idleTimeout: [this.isNumber, 0],
+        maxReconnect: [this.isNumber, 5]
       };
     }
 
