@@ -73,7 +73,7 @@ var ConnectionConfig = function () {
         cert: null,
         ca: null,
         idleTimeout: 0,
-        maxReconnect: 5
+        maxReconnect: Infinity
       };
     }
   }]);
@@ -267,7 +267,7 @@ var ConnectionConfig = function () {
         cert: [this.isBuffer],
         ca: [this.isArray],
         idleTimeout: [this.isNumber, 0],
-        maxReconnect: [this.isNumber, 5]
+        maxReconnect: [this.isNumber, Infinity]
       };
     }
 

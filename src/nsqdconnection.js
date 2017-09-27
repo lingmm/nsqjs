@@ -234,9 +234,13 @@ var NSQDConnection = function (_EventEmitter) {
   }, {
     key: 'handleReconnect',
     value: function handleReconnect() {
+      var _this3 = this;
+
       if (++this.hadReconnectedCount < this.config.maxReconnect) {
-        this.debug('Reconnect...');
-        this.connect();
+        setTimeout(function () {
+          _this3.debug('Reconnect...');
+          _this3.connect();
+        }, 2e3);
       } else {
         throw new Error('Max reconnect retries(' + this.config.maxReconnect + ') reached');
       }
@@ -251,38 +255,38 @@ var NSQDConnection = function (_EventEmitter) {
   }, {
     key: 'registerStreamListeners',
     value: function registerStreamListeners(conn) {
-      var _this3 = this;
+      var _this4 = this;
 
       conn.on('data', function (data) {
-        return _this3.receiveRawData(data);
+        return _this4.receiveRawData(data);
       });
       conn.on('end', function () {
         try {
-          _this3.handleReconnect();
+          _this4.handleReconnect();
         } catch (e) {
-          _this3.statemachine.goto('CLOSED');
+          _this4.statemachine.goto('CLOSED');
           throw e;
         }
       });
       conn.on('error', function (err) {
         try {
-          _this3.handleReconnect();
+          _this4.handleReconnect();
         } catch (e) {
-          _this3.statemachine.goto('ERROR', err);
-          _this3.emit('connection_error', err);
+          _this4.statemachine.goto('ERROR', err);
+          _this4.emit('connection_error', err);
           throw e;
         }
       });
       conn.on('close', function () {
         try {
-          _this3.handleReconnect();
+          _this4.handleReconnect();
         } catch (e) {
-          _this3.statemachine.raise('close');
+          _this4.statemachine.raise('close');
           throw e;
         }
       });
       conn.setTimeout(this.config.idleTimeout * 1000, function () {
-        return _this3.statemachine.raise('close');
+        return _this4.statemachine.raise('close');
       });
     }
 
@@ -295,7 +299,7 @@ var NSQDConnection = function (_EventEmitter) {
   }, {
     key: 'startTLS',
     value: function startTLS(callback) {
-      var _this4 = this;
+      var _this5 = this;
 
       var _arr = ['data', 'error', 'close'];
 
@@ -313,7 +317,7 @@ var NSQDConnection = function (_EventEmitter) {
       };
 
       var tlsConn = tls.connect(options, function () {
-        _this4.conn = tlsConn;
+        _this5.conn = tlsConn;
         typeof callback === 'function' ? callback() : undefined;
       });
 
@@ -387,14 +391,14 @@ var NSQDConnection = function (_EventEmitter) {
   }, {
     key: 'receiveRawData',
     value: function receiveRawData(data) {
-      var _this5 = this;
+      var _this6 = this;
 
       if (!this.inflater) return this.receiveData(data);
 
       this.inflater.write(data, function () {
-        var uncompressedData = _this5.inflater.read();
+        var uncompressedData = _this6.inflater.read();
         if (uncompressedData) {
-          _this5.receiveData(uncompressedData);
+          _this6.receiveData(uncompressedData);
         }
       });
     }
@@ -508,7 +512,7 @@ var NSQDConnection = function (_EventEmitter) {
   }, {
     key: 'createMessage',
     value: function createMessage(msgPayload) {
-      var _this6 = this;
+      var _this7 = this;
 
       var msgComponents = wire.unpackMessage(msgPayload);
       var msg = new (Function.prototype.bind.apply(Message, [null].concat(_toConsumableArray(msgComponents), [this.config.requeueDelay, this.msgTimeout, this.maxMsgTimeout])))();
@@ -516,19 +520,19 @@ var NSQDConnection = function (_EventEmitter) {
       this.debug('Received message [' + msg.id + '] [attempts: ' + msg.attempts + ']');
 
       msg.on(Message.RESPOND, function (responseType, wireData) {
-        _this6.write(wireData);
+        _this7.write(wireData);
 
         if (responseType === Message.FINISH) {
-          _this6.debug('Finished message [' + msg.id + '] [timedout=' + (msg.timedout === true) + ', elapsed=' + (Date.now() - msg.receivedOn) + 'ms, touch_count=' + msg.touchCount + ']');
-          _this6.emit(NSQDConnection.FINISHED);
+          _this7.debug('Finished message [' + msg.id + '] [timedout=' + (msg.timedout === true) + ', elapsed=' + (Date.now() - msg.receivedOn) + 'ms, touch_count=' + msg.touchCount + ']');
+          _this7.emit(NSQDConnection.FINISHED);
         } else if (responseType === Message.REQUEUE) {
-          _this6.debug('Requeued message [' + msg.id + ']');
-          _this6.emit(NSQDConnection.REQUEUED);
+          _this7.debug('Requeued message [' + msg.id + ']');
+          _this7.emit(NSQDConnection.REQUEUED);
         }
       });
 
       msg.on(Message.BACKOFF, function () {
-        return _this6.emit(NSQDConnection.BACKOFF);
+        return _this7.emit(NSQDConnection.BACKOFF);
       });
 
       return msg;
@@ -542,11 +546,11 @@ var NSQDConnection = function (_EventEmitter) {
   }, {
     key: 'write',
     value: function write(data) {
-      var _this7 = this;
+      var _this8 = this;
 
       if (this.deflater) {
         this.deflater.write(data, function () {
-          return _this7.conn.write(_this7.deflater.read());
+          return _this8.conn.write(_this8.deflater.read());
         });
       } else {
         this.conn.write(data);
@@ -602,15 +606,15 @@ var ConnectionState = function (_NodeState) {
   function ConnectionState(conn) {
     _classCallCheck(this, ConnectionState);
 
-    var _this8 = _possibleConstructorReturn(this, (ConnectionState.__proto__ || Object.getPrototypeOf(ConnectionState)).call(this, {
+    var _this9 = _possibleConstructorReturn(this, (ConnectionState.__proto__ || Object.getPrototypeOf(ConnectionState)).call(this, {
       autostart: true,
       initial_state: 'INIT',
       sync_goto: true
     }));
 
-    _this8.conn = conn;
-    _this8.identifyResponse = null;
-    return _this8;
+    _this9.conn = conn;
+    _this9.identifyResponse = null;
+    return _this9;
   }
 
   /**
@@ -990,10 +994,10 @@ var WriterNSQDConnection = function (_NSQDConnection) {
 
     _classCallCheck(this, WriterNSQDConnection);
 
-    var _this9 = _possibleConstructorReturn(this, (WriterNSQDConnection.__proto__ || Object.getPrototypeOf(WriterNSQDConnection)).call(this, nsqdHost, nsqdPort, null, null, options));
+    var _this10 = _possibleConstructorReturn(this, (WriterNSQDConnection.__proto__ || Object.getPrototypeOf(WriterNSQDConnection)).call(this, nsqdHost, nsqdPort, null, null, options));
 
-    _this9.debug = debug('nsqjs:writer:conn:' + nsqdHost + '/' + nsqdPort);
-    return _this9;
+    _this10.debug = debug('nsqjs:writer:conn:' + nsqdHost + '/' + nsqdPort);
+    return _this10;
   }
 
   /**
