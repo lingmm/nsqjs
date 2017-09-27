@@ -258,7 +258,7 @@ var NSQDConnection = function (_EventEmitter) {
       });
       conn.on('end', function () {
         try {
-          handleReconnect();
+          _this3.handleReconnect();
         } catch (e) {
           _this3.statemachine.goto('CLOSED');
           throw e;
@@ -266,7 +266,7 @@ var NSQDConnection = function (_EventEmitter) {
       });
       conn.on('error', function (err) {
         try {
-          handleReconnect();
+          _this3.handleReconnect();
         } catch (e) {
           _this3.statemachine.goto('ERROR', err);
           _this3.emit('connection_error', err);
@@ -275,7 +275,7 @@ var NSQDConnection = function (_EventEmitter) {
       });
       conn.on('close', function () {
         try {
-          handleReconnect();
+          _this3.handleReconnect();
         } catch (e) {
           _this3.statemachine.raise('close');
           throw e;
