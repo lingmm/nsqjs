@@ -1,5 +1,7 @@
 'use strict';
 
+require('babel-polyfill');
+
 var _require = require('./nsqdconnection'),
     NSQDConnection = _require.NSQDConnection,
     WriterNSQDConnection = _require.WriterNSQDConnection;

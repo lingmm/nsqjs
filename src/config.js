@@ -72,7 +72,8 @@ var ConnectionConfig = function () {
         key: null,
         cert: null,
         ca: null,
-        idleTimeout: 0
+        idleTimeout: 0,
+        maxReconnect: 5
       };
     }
   }]);

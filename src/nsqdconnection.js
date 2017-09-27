@@ -171,6 +171,7 @@ var NSQDConnection = function (_EventEmitter) {
     _this.conn = null; // Socket connection to NSQD
     _this.identifyTimeoutId = null; // Timeout ID for triggering identifyFail
     _this.messageCallbacks = []; // Callbacks on message sent responses
+    _this.hadReconnectedCount = 0;
     return _this;
   }
 
@@ -216,7 +217,7 @@ var NSQDConnection = function (_EventEmitter) {
         _this2.conn = net.connect({ port: _this2.nsqdPort, host: _this2.nsqdHost }, function () {
           _this2.statemachine.raise('connected');
           _this2.emit(NSQDConnection.CONNECTED);
-
+          _this2.hadReconnectedCount = 0;
           // Once there's a socket connection, give it 5 seconds to receive an
           // identify response.
           _this2.identifyTimeoutId = setTimeout(function () {
@@ -229,6 +230,16 @@ var NSQDConnection = function (_EventEmitter) {
 
         _this2.registerStreamListeners(_this2.conn);
       });
+    }
+  }, {
+    key: 'handleReconnect',
+    value: function handleReconnect() {
+      if (++this.hadReconnectedCount < this.config.maxReconnect) {
+        this.debug('Reconnect...');
+        this.connect();
+      } else {
+        throw new Error('Max reconnect retries(' + this.config.maxReconnect + ') reached');
+      }
     }
 
     /**
@@ -246,14 +257,29 @@ var NSQDConnection = function (_EventEmitter) {
         return _this3.receiveRawData(data);
       });
       conn.on('end', function () {
-        _this3.statemachine.goto('CLOSED');
+        try {
+          handleReconnect();
+        } catch (e) {
+          _this3.statemachine.goto('CLOSED');
+          throw e;
+        }
       });
       conn.on('error', function (err) {
-        _this3.statemachine.goto('ERROR', err);
-        _this3.emit('connection_error', err);
+        try {
+          handleReconnect();
+        } catch (e) {
+          _this3.statemachine.goto('ERROR', err);
+          _this3.emit('connection_error', err);
+          throw e;
+        }
       });
       conn.on('close', function () {
-        return _this3.statemachine.raise('close');
+        try {
+          handleReconnect();
+        } catch (e) {
+          _this3.statemachine.raise('close');
+          throw e;
+        }
       });
       conn.setTimeout(this.config.idleTimeout * 1000, function () {
         return _this3.statemachine.raise('close');
